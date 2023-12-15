@@ -10,9 +10,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
-
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.User_Name}:${process.env.User_pass}@cluster0.dtfuxds.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -72,31 +70,68 @@ async function run() {
       res.send(result);
     });
 
-    // ----get added products---------
+    // ----get added user---------
     app.get("/getUser", async (req, res) => {
-      const {search} = req.query;
+      const { search } = req.query;
       console.log(search);
 
-        const {sortBy}=req.query;
-      let sortItem={}
-      if(sortBy === 'A-Z'){
-        sortItem={name:1}
-      }else if(sortBy === 'Z-A'){
-        sortItem={name:-1}
-      }else if(sortBy === 'LastInserted' ){
-        sortBy = { insertDate: -1 };
+      const { sortBy } = req.query;
+      let sortItem = {};
+      if (sortBy === "A-Z") {
+        sortItem = { name: 1 };
+      } else if (sortBy === "Z-A") {
+        sortItem = { name: -1 };
+      } else if (sortBy === "LastInserted") {
+        sortItem = { insertDate: -1 };
+      } else if (sortBy === "LastModified") {
+        sortItem = { modifiedDate: -1 };
       }
 
       const result = await addedUserCollection
         .find({
           $or: [
             { name: { $regex: search, $options: "i" } },
-            { mobile: { $regex: search, $options: "i" } },
+            { phone: { $regex: search, $options: "i" } },
             { email: { $regex: search, $options: "i" } },
           ],
         })
         .sort(sortItem)
         .toArray();
+      res.send(result);
+    });
+
+    // ----delete user from database----
+    app.delete("/deleteUser/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await addedUserCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // ----get user for update----
+    app.get("/getUser/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await addedUserCollection.findOne(query);
+      // console.log({ result });
+      res.send(result);
+    });
+
+    // ------user info update--------
+    app.patch("/updated/:id", async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          modifiedDate: item.modifiedDate,
+         
+        },
+      };
+      const result = await addedUserCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
 
