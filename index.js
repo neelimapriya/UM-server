@@ -73,7 +73,7 @@ async function run() {
     // ----get added user---------
     app.get("/getUser", async (req, res) => {
       const { search } = req.query;
-      console.log(search);
+      // console.log(search);
 
       const { sortBy } = req.query;
       let sortItem = {};
@@ -90,9 +90,9 @@ async function run() {
       const result = await addedUserCollection
         .find({
           $or: [
-            { name: { $regex: search, $options: "i" } },
-            { phone: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } },
+            { name: { $regex: `${search}`, $options: "i" } },
+            { phone: { $regex: `${search}`, $options: "i" } },
+            { email: { $regex: `${search}`, $options: "i" } },
           ],
         })
         .sort(sortItem)
